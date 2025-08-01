@@ -1,4 +1,4 @@
-# 🧠 Daily Task Generator
+# 🧠 Daily Task Bot
 
 This project automates the generation of daily tasks using data from a configurable Google Sheet. It creates a templated Google Doc containing the day's algorithm topic and problem, integrating with Google Calendar.
 
@@ -95,7 +95,7 @@ sheets:
 ## 🧱 Project Structure
 
 ```
-leetcode-daily-docs/
+daily-task-bot/
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                  # Entrypoint for cron execution
