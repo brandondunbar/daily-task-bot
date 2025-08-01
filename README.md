@@ -1,6 +1,6 @@
-# 🧠 LeetCode Daily Task Generator
+# 🧠 Daily Task Generator
 
-This project automates the generation of daily LeetCode practice tasks using data from a configurable Google Sheet. It creates a templated Google Doc containing the day's algorithm topic and problem, optionally integrating with Google Calendar.
+This project automates the generation of daily tasks using data from a configurable Google Sheet. It creates a templated Google Doc containing the day's algorithm topic and problem, integrating with Google Calendar.
 
 ---
 
@@ -10,7 +10,7 @@ Designed for consistency and automation, this tool:
 
 * Reads a structured schedule from Google Sheets
 * Generates a Google Doc based on the current date and predefined template
-* (Optionally) creates a Google Calendar reminder
+* Creates a Google Calendar reminder
 * Runs as a local CRON job in a Docker container
 
 Ideal for self-paced learners who want daily, auto-generated problem-solving tasks with no manual tracking.
@@ -97,31 +97,38 @@ sheets:
 ```
 leetcode-daily-docs/
 ├── src/
-│   ├── main.py
-│   ├── scheduler.py
-│   ├── google_sheets.py
-│   ├── google_docs.py
-│   ├── calendar_integration.py
-│   └── utils.py
+│   ├── __init__.py
+│   ├── main.py                  # Entrypoint for cron execution
+│   ├── scheduler.py             # Controls high-level logic for daily task
+│   ├── google_sheets.py         # Pulls today's task row from Google Sheets
+│   ├── google_docs.py           # Fills template and writes to Google Docs
+│   ├── google_calendar.py       # Creates a Google Calendar event
+│   ├── config_loader.py         # Loads and validates config.yaml
+│   └── utils.py                 # Logging, date parsing, etc.
+│
+├── templates/
+│   └── default_blurb.j2         # Optional: Jinja2 blurb file if not inline
+│
 ├── tests/
-├── config.yaml
-├── .env.example
-├── requirements.txt
-├── Dockerfile
-├── README.md
-├── ARCHITECTURE.md
-└── cronjob.txt
+│   ├── __init__.py
+│   ├── test_scheduler.py
+│   ├── test_google_sheets.py
+│   ├── test_google_docs.py
+│   ├── test_google_calendar.py
+│   ├── test_config_loader.py
+│   └── fixtures/
+│       └── mock_schedule.csv    # Optional test data
+│
+├── config.yaml                  # Main runtime configuration
+├── .env.example                 # Template for secret keys (gitignored)
+├── requirements.txt             # Python dependencies
+├── Dockerfile                   # Containerized execution
+├── Makefile                     # Optional: `make run`, `make test`, etc.
+├── cronjob.txt                  # Example crontab entry
+├── README.md                    # Project usage and onboarding
+├── ARCHITECTURE.md              # System design and boundaries
+└── .gitignore                   # Ignore .env, __pycache__, etc.
 ```
-
----
-
-## ✨ Future Enhancements
-
-* Support multiple Sheets simultaneously
-* Sync solved problems to GitHub repo
-* Add metrics dashboard for daily/weekly performance
-* Integration with LeetCode API (if public)
-* Email/Slack reminder support
 
 ---
 
