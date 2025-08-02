@@ -44,7 +44,7 @@ def test_main_smoke(monkeypatch):
         monkeypatch (pytest.MonkeyPatch): Used to mock all submodule functions.
     """
     monkeypatch.setattr("src.main.load_config", lambda path: mock_config)
-    monkeypatch.setattr("src.main.get_sheet_rows", lambda conf, creds: mock_rows)
+    monkeypatch.setattr("src.main.get_sheet_rows", lambda conf, credentials=None: mock_rows)
     monkeypatch.setattr("src.main.find_today_task", lambda rows, date_column: mock_row)
     monkeypatch.setattr("src.main.create_google_doc", lambda conf, row: "mock-doc-link")
     monkeypatch.setattr("src.main.create_calendar_event", lambda conf, row, doc: "mock-event-id")
