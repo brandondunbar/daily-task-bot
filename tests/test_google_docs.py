@@ -5,15 +5,15 @@ from src.google_docs import render_template_to_string, create_google_doc
 @pytest.fixture
 def sample_task_row():
     return {
-        "Pattern Focus": "Sliding Window",
-        "Problem Title": "Longest Substring Without Repeating Characters",
-        "LeetCode Link": "https://leetcode.com/problems/longest-substring-without-repeating-characters/"
+        "pattern_focus": "Sliding Window",
+        "problem_title": "Longest Substring Without Repeating Characters",
+        "leetcode_link": "https://leetcode.com/problems/longest-substring-without-repeating-characters/"
     }
 
 
 @pytest.fixture
 def sample_blurb():
-    return "Today's focus is on {{ Pattern Focus }}. Solve: {{ Problem Title }} - {{ LeetCode Link }}"
+    return "Today's focus is on {{ pattern_focus }}. Solve: {{ problem_title }} - {{ leetcode_link }}"
 
 
 def test_render_template_to_string_fills_blurb(sample_task_row, sample_blurb):
@@ -48,7 +48,7 @@ def test_create_google_doc_calls_api(monkeypatch, sample_task_row):
 
     monkeypatch.setattr("src.google_docs._create_doc_in_drive", mock_create_doc)
 
-    blurb = "Focus: {{ Pattern Focus }}"
+    blurb = "Focus: {{ pattern_focus }}"
     config = {
         "output_folder_id": "test-folder-id",
         "template_blurb": blurb
