@@ -1,4 +1,5 @@
 from datetime import datetime
+from src.utils import get_today_str
 
 
 def find_today_task(rows, date_column="Date"):
@@ -15,7 +16,7 @@ def find_today_task(rows, date_column="Date"):
     Raises:
         KeyError: If the date_column is missing in any row.
     """
-    today = datetime.today().strftime("%Y-%m-%d")
+    today = get_today_str()
 
     for row in rows:
         if row[date_column] == today:
