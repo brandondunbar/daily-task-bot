@@ -31,23 +31,23 @@ class MockSheetClient:
     def __init__(self, worksheet_name):
         self.worksheet_name = worksheet_name
 
-        def worksheet(self, name):
-            """
-            Simulate worksheet lookup. Returns a mock worksheet if the name matches.
+    def worksheet(self, name):
+        """
+        Simulate worksheet lookup. Returns a mock worksheet if the name matches.
 
-            Args:
-                name (str): The name of the worksheet to retrieve.
+        Args:
+            name (str): The name of the worksheet to retrieve.
 
-            Returns:
-                MockWorksheet: A mock worksheet object.
+        Returns:
+            MockWorksheet: A mock worksheet object.
 
-            Raises:
-                ValueError: If the worksheet name does not match.
-            """
+        Raises:
+            ValueError: If the worksheet name does not match.
+        """
 
-            if name == self.worksheet_name:
-                return MockWorksheet()
-            raise ValueError("Worksheet not found")
+        if name == self.worksheet_name:
+            return MockWorksheet()
+        raise ValueError("Worksheet not found")
 
 
 @pytest.fixture
