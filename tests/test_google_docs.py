@@ -46,7 +46,7 @@ def test_create_google_doc_calls_api(monkeypatch, sample_task_row):
         called["content"] = content
         return "mock-doc-id"
 
-    monkeypatch.setattr("src.google_docs.create_doc_in_drive", mock_create_doc)
+    monkeypatch.setattr("src.google_docs._create_doc_in_drive", mock_create_doc)
 
     blurb = "Focus: {{ Pattern Focus }}"
     config = {
