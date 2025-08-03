@@ -2,6 +2,11 @@
 Enables interaction with Google Sheets.
 """
 
+import gspread
+from google.oauth2.service_account import Credentials
+from src.constants import GOOGLE_CREDENTIALS_PATH
+
+
 def get_sheet_rows(sheet_config, credentials):
     """
     Connect to a Google Sheet and retrieve all rows from a specified worksheet.
@@ -18,15 +23,13 @@ def get_sheet_rows(sheet_config, credentials):
     return worksheet.get_all_records()
 
 
-def get_gspread_client(credentials):
-    """
-    Placeholder to represent gspread client setup.
-    In actual implementation, this would authorize and return a gspread client.
+def get_gspread_client(credentials_path=GOOGLE_CREDENTIALS_PATH):
+    """Authenticate and return a gspread client using service account credentials."""
 
-    Args:
-        credentials (dict): Credential object or data to authorize access.
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets.readonly",
+        "https://www.googleapis.com/auth/drive.readonly"
+    ]
 
-    Returns:
-        gspread.Client: A Google Sheets API client.
-    """
-    raise NotImplementedError("This function should return an authorized gspread client.")
+    creds = Credentials.from_service_account_file(credentials_path, scopes=scopes)
+    return gspread.authorize(creds)
