@@ -1,5 +1,6 @@
 import pytest
 from src.google_sheets import get_sheet_rows
+from src.google_sheets import get_gspread_client
 
 
 class MockWorksheet:
@@ -81,3 +82,28 @@ def test_get_sheet_rows_returns_expected_data(monkeypatch, sample_config):
     assert len(rows) == 2
     assert rows[0]["Problem Title"] == "Test Problem 1"
     assert rows[1]["Date"] == "2025-08-02"
+
+
+def test_get_gspread_client_authenticates(monkeypatch):
+    """
+    Ensure get_gspread_client loads credentials and returns an authorized client.
+
+    Args:
+        monkeypatch (pytest.MonkeyPatch): Used to patch gspread client.
+    """
+
+    class FakeCreds:
+        def __init__(self, *args, **kwargs): pass
+
+    class FakeGC:
+        def __init__(self): pass
+
+    called = {}
+
+    monkeypatch.setattr("src.google_sheets.Credentials.from_service_account_file", lambda path, scopes: FakeCreds())
+    monkeypatch.setattr("src.google_sheets.gspread.authorize", lambda creds: "mock-client")
+
+    client = get_gspread_client()
+
+    assert client == "mock-client"
+
