@@ -24,7 +24,21 @@ def get_sheet_rows(sheet_config, credentials):
 
 
 def get_gspread_client(credentials_path=GOOGLE_CREDENTIALS_PATH):
-    """Authenticate and return a gspread client using service account credentials."""
+    """Authenticate and return a gspread client using service account credentials.
+    
+    Args:
+        credentials_path (str): The relative or absolute path to the Service
+            Account credentials JSON file.
+
+    Returns:
+        gspread.Client: An authenticated client object for accessing Google Sheets.
+
+    Raises:
+        FileNotFoundError: If the specified credentials file does not exist.
+        google.auth.exceptions.GoogleAuthError: If the credentials are invalid
+            or authentication fails.
+        ValueError: If the credentials file is malformed or missing required fields.
+    """
 
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets.readonly",
