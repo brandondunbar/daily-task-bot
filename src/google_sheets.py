@@ -7,19 +7,18 @@ from google.oauth2.service_account import Credentials
 from src.constants import GOOGLE_CREDENTIALS_PATH
 
 
-def get_sheet_rows(sheet_config, credentials):
+def get_sheet_rows(sheet_config):
     """
     Connect to a Google Sheet and retrieve all rows from a specified worksheet.
 
     Args:
         sheet_config (dict): Configuration for the target sheet, including worksheet name.
-        credentials (dict): Credentials or a client object for connecting to Google Sheets.
 
     Returns:
         list: A list of dictionaries representing the worksheet rows.
     """
-    client = get_gspread_client(credentials)
-    worksheet = client.worksheet(sheet_config["worksheet"])
+    client = get_gspread_client()
+    worksheet = client.open(sheet_config["worksheet"]).sheet1
     return worksheet.get_all_records()
 
 
