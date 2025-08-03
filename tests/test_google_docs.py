@@ -1,5 +1,44 @@
 import pytest
-from src.google_docs import render_template_to_string, create_google_doc
+from src.google_docs import render_template_to_string, create_google_doc, _create_doc_in_drive
+
+
+@pytest.fixture
+def mock_google_services(monkeypatch):
+    """
+    Mock Google Docs and Drive services.
+    """
+    captured = {}
+
+    class MockDocsService:
+        def documents(self):
+            return self
+        
+        def create(self, body):
+            captured["docs_body"] = body
+            return self
+
+        def execute(self):
+            return {"documentId": "abc123"}
+    
+    class MockDriveService:
+        def files(self):
+            return self
+        
+        def update(self, fileId, addParents, fields):
+            captured.update({
+                "fileId": fileId,
+                "addParents": addParents,
+                "fields": fields
+            })
+            return self
+        
+        def execute(self):
+            return {"id": "abc123"}
+
+    monkeypatch.setattr("src.google_docs.build_docs_service", lambda: MockDocsService())
+    monkeypatch.setattr("src.google_docs.build_drive_service", lambda: MockDriveService())
+
+    return captured
 
 
 @pytest.fixture
@@ -58,3 +97,17 @@ def test_create_google_doc_calls_api(monkeypatch, sample_task_row):
     assert doc_id == "mock-doc-id"
     assert called["folder_id"] == "test-folder-id"
     assert "Sliding Window" in called["content"]
+
+def test_create_doc_in_drive_calls_apis(mock_google_services):
+    """
+    Test that _create_doc_in_drive creates a Google Doc and moves it to the
+    correct folder.
+    """
+    captured = mock_google_services
+    doc_id = _create_doc_in_drive("folder-xyz", "Test Doc Title", "Some content")
+
+    assert doc_id == "abc123"
+    assert captured["docs_body"]["title"] == "Test Doc Title"
+    assert captured["fileId"] == "abc123"
+    assert captured["addParents"] ==  "folder-xyz"
+    assert captured["fields"] == "id"
