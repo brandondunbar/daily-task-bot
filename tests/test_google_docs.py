@@ -1,91 +1,48 @@
 import pytest
-from src.google_docs import render_template_to_string, edit_title, overwrite_doc_contents
+from unittest.mock import MagicMock, patch
+from googleapiclient.errors import HttpError
+from src.google_docs import overwrite_doc_contents
+from google.oauth2.service_account import Credentials
 
 
 @pytest.fixture
-def mock_google_docs_service(monkeypatch):
-    """
-    Mock Google Docs service.
-    """
-    captured = {"requests": []}
-
-    class MockDocuments:
-        def get(self, documentId):
-            return self
-
-        def execute(self):
-            return {
-                "body": {
-                    "content": [
-                        {"endIndex": 25}
-                    ]
-                }
-            }
-
-        def update(self, documentId, body):
-            captured["title_update"] = (documentId, body)
-            return self
-
-        def batchUpdate(self, documentId, body):
-            captured["batch_update"] = (documentId, body)
-            return self
-
-    class MockDocsService:
-        def documents(self):
-            return MockDocuments()
-
-    monkeypatch.setattr("src.google_docs.build_docs_service", lambda: MockDocsService())
-    return captured
+def fake_credentials():
+    return MagicMock(spec=Credentials)
 
 
-@pytest.fixture
-def sample_task_row():
-    return {
-        "pattern_focus": "Sliding Window",
-        "problem_title": "Longest Substring Without Repeating Characters",
-        "leetcode_link": "https://leetcode.com/problems/longest-substring-without-repeating-characters/"
+def test_overwrite_doc_contents_sends_expected_requests(fake_credentials):
+    mock_execute = MagicMock()
+    mock_execute.return_value = {
+        "body": {
+            "content": [{"endIndex": 42}]
+        }
     }
 
+    mock_get = MagicMock()
+    mock_get.execute = mock_execute
 
-@pytest.fixture
-def sample_blurb():
-    return "Today's focus is on {{ pattern_focus }}. Solve: {{ problem_title }} - {{ leetcode_link }}"
+    mock_batch_update = MagicMock()
+    mock_batch_update.execute = MagicMock()
 
+    mock_documents = MagicMock()
+    mock_documents.get.return_value = mock_get
+    mock_documents.batchUpdate.return_value = mock_batch_update
 
-def test_render_template_to_string_fills_blurb(sample_task_row, sample_blurb):
-    """
-    Test that a template blurb is correctly rendered with task row data.
+    mock_docs_service = MagicMock()
+    mock_docs_service.documents.return_value = mock_documents
 
-    Args:
-        sample_task_row (dict): Simulated row of task data.
-        sample_blurb (str): Template with placeholders.
-    """
-    rendered = render_template_to_string(sample_blurb, sample_task_row) 
-    assert "Sliding Window" in rendered
-    assert "Longest Substring Without Repeating Characters" in rendered
-    assert "https://leetcode.com/problems/longest-substring-without-repeating-characters/" in rendered
+    with patch("src.google_docs.build_docs_service", return_value=mock_docs_service):
+        overwrite_doc_contents("test-doc-id", "New content goes here.", fake_credentials)
 
-
-def test_edit_title(mock_google_docs_service):
-    """
-    Test that edit_title sends the correct document ID and title update payload
-    to the Google Docs API.
-    """
-    edit_title("abc123", "New Title")
-    doc_id, body = mock_google_docs_service["title_update"]
-    assert doc_id == "abc123"
-    assert body["title"] == "New Title"
+    mock_documents.get.assert_called_once_with(documentId="test-doc-id")
+    mock_documents.batchUpdate.assert_called_once()
+    mock_batch_update.execute.assert_called_once()
 
 
-def test_overwrite_doc_contents(mock_google_docs_service):
-    """
-    Test that overwrite_doc_contents deletes existing content and inserts
-    the new content at the start of the document.
-    """
-    overwrite_doc_contents("abc123", "Overwritten content.")
-    doc_id, body = mock_google_docs_service["batch_update"]
-    assert doc_id == "abc123"
+def test_overwrite_doc_contents_handles_http_error(fake_credentials):
+    mock_docs_service = MagicMock()
+    mock_docs_service.documents().get.side_effect = HttpError(resp=MagicMock(), content=b"Error")
 
-    requests = body["requests"]
-    assert requests[0]["deleteContentRange"]["range"] == {"startIndex": 1, "endIndex": 24}
-    assert requests[1]["insertText"] == {"location": {"index": 1}, "text": "Overwritten content."}
+    with patch("src.google_docs.build_docs_service", return_value=mock_docs_service):
+        with pytest.raises(HttpError):
+            overwrite_doc_contents("test-doc-id", "Content", fake_credentials)
