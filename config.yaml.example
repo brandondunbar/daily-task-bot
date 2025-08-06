@@ -1,0 +1,17 @@
+google_sheets:
+  spreadsheet_id: "your-spreadsheet-id"
+  time_zone: "America/New_York"
+  date_column_name: "Date"
+
+doc_blocks:
+  - name: "Example Block"
+    sheet_name: "ExampleSheet"
+    template_path: "templates/example.md"
+    block_title_template: "Example - {{ date }}"
+    enabled: true
+
+  - name: "Example Block"
+    sheet_name: "ExampleSheet"
+    template_path: "templates/example.md"
+    block_title_template: "Example - {{ date }}"
+    enabled: true
