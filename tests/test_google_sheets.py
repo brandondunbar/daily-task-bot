@@ -1,109 +1,49 @@
 import pytest
+from unittest.mock import MagicMock
 from src.google_sheets import get_sheet_rows
-from src.google_sheets import get_gspread_client
+from google.oauth2.service_account import Credentials
 
 
 class MockWorksheet:
-    """
-    A mock worksheet that simulates a Google Sheets worksheet object.
-    Provides static row data via get_all_records().
-    """
-
     def get_all_records(self):
-        """
-        Return a static list of row dictionaries representing worksheet data.
-
-        Returns:
-            list: A list of dictionaries with mock data.
-        """
-
         return [
             {"Date": "2025-08-01", "Problem Title": "Test Problem 1"},
-            {"Date": "2025-08-02", "Problem Title": "Test Problem 2"}
+            {"Date": "2025-08-02", "Problem Title": "Test Problem 2"},
         ]
 
 
-class MockSheetClient:
-    """
-    A mock gspread client that returns a mock worksheet.
-    Used to simulate accessing a Google Sheets worksheet by name.
-    """
-
-    def __init__(self, worksheet_name):
-        self.worksheet_name = worksheet_name
+class MockSheet:
+    def __init__(self, expected_name):
+        self.expected_name = expected_name
 
     def worksheet(self, name):
-        """
-        Simulate worksheet lookup. Returns a mock worksheet if the name matches.
+        if name != self.expected_name:
+            raise ValueError("Worksheet not found")
+        return MockWorksheet()
 
-        Args:
-            name (str): The name of the worksheet to retrieve.
 
-        Returns:
-            MockWorksheet: A mock worksheet object.
+class MockClient:
+    def __init__(self, expected_name):
+        self.expected_name = expected_name
 
-        Raises:
-            ValueError: If the worksheet name does not match.
-        """
-
-        if name == self.worksheet_name:
-            return MockWorksheet()
-        raise ValueError("Worksheet not found")
+    def open_by_key(self, key):
+        return MockSheet(self.expected_name)
 
 
 @pytest.fixture
-def sample_config():
-    return {
-        "name": "Test Sheet",
-        "id": "fake-id",
-        "worksheet": "Schedule",
-        "date_column": "Date",
-        "output_folder_id": "folder-id",
-        "template_blurb": "{{ Problem Title }}",
-        "column_mapping": {
-            "Problem Title": "Problem Title"
-        }
-    }
+def fake_credentials():
+    return MagicMock(spec=Credentials)
 
 
-def test_get_sheet_rows_returns_expected_data(monkeypatch, sample_config):
-    """
-    Test that get_sheet_rows returns expected data using a mocked Sheet client.
+def test_get_sheet_rows_returns_expected_data(monkeypatch, fake_credentials):
+    expected_sheet_name = "Schedule"
+    spreadsheet_id = "fake-id"
 
-    Args:
-        monkeypatch (pytest.MonkeyPatch): Used to patch gspread client.
-        sample_config (dict): Example sheet config.
-    """
-    
-    monkeypatch.setattr("src.google_sheets.get_gspread_client", lambda _: MockSheetClient("Schedule"))
+    monkeypatch.setattr("src.google_sheets.gspread.authorize", lambda creds: MockClient(expected_sheet_name))
 
-    rows = get_sheet_rows(sample_config, credentials={})
+    rows = get_sheet_rows(expected_sheet_name, spreadsheet_id, fake_credentials)
+
     assert isinstance(rows, list)
     assert len(rows) == 2
     assert rows[0]["Problem Title"] == "Test Problem 1"
     assert rows[1]["Date"] == "2025-08-02"
-
-
-def test_get_gspread_client_authenticates(monkeypatch):
-    """
-    Ensure get_gspread_client loads credentials and returns an authorized client.
-
-    Args:
-        monkeypatch (pytest.MonkeyPatch): Used to patch gspread client.
-    """
-
-    class FakeCreds:
-        def __init__(self, *args, **kwargs): pass
-
-    class FakeGC:
-        def __init__(self): pass
-
-    called = {}
-
-    monkeypatch.setattr("src.google_sheets.Credentials.from_service_account_file", lambda path, scopes: FakeCreds())
-    monkeypatch.setattr("src.google_sheets.gspread.authorize", lambda creds: "mock-client")
-
-    client = get_gspread_client()
-
-    assert client == "mock-client"
-
