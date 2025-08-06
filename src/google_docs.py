@@ -19,63 +19,66 @@ def render_template_to_string(template_str, row):
     return template.render(**row)
 
 
-def create_google_doc(config, row):
-    """
-    Render content from a template and create a Google Doc in the specified folder.
-
-    Args:
-        config (dict): Contains `output_folder_id` and `template_blurb` keys.
-        row (dict): A row of task data from the sheet.
-
-    Returns:
-        str: The ID of the created Google Doc.
-    """
-    content = render_template_to_string(config["template_blurb"], row)
-    title_template = config.get("title_template", "{{ Date }}")
-    title = render_template_to_string(title_template, row)
-    folder_id = config["output_folder_id"]
-    return _create_doc_in_drive(folder_id, title, content)
-
-
 def build_docs_service():
     """Return an authenticated Google Docs API service."""
-    scopes = ["https://www.googleapis.com/auth/documents"]
+    scopes = [
+        "https://www.googleapis.com/auth/documents",
+        "https://www.googleapis.com/auth/drive"
+    ]
     creds = Credentials.from_service_account_file(GOOGLE_CREDENTIALS_PATH, scopes=scopes)
     return build("docs", "v1", credentials=creds)
 
 
-def build_drive_service():
-    """Return an authenticated Google Drive API service."""
-    scopes = ["https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file(GOOGLE_CREDENTIALS_PATH, scopes=scopes)
-    return build("drive", "v3", credentials=creds)
-
-
-def _create_doc_in_drive(folder_id, title, content):
+def edit_title(document_id, new_title):
     """
-    Create a new Google Doc with the given title and content, and move it to the specified folder.
+    Update the title of a Google Doc.
 
     Args:
-        folder_id (str): ID of the target Google Drive folder.
-        title (str): Title for the new Google Doc.
-        content (str): Body content of the document.
-
-    Returns:
-        str: ID of the created document.
+        document_id (str): The ID of the document to update.
+        new_title (str): The new title to set for the document.
     """
     docs_service = build_docs_service()
-    drive_service = build_drive_service()
-
-    # Create the document with title and initial content
-    doc_metadata = {"title": title}
-    doc = docs_service.documents().create(body=doc_metadata).execute()
-    doc_id = doc.get("documentId")
-
-    # Move the doc into the specified folder
-    drive_service.files().update(
-        fileId=doc_id,
-        addParents=folder_id,
-        fields="id"
+    docs_service.documents().update(
+        documentId=document_id,
+        body={"title": new_title}
     ).execute()
 
-    return doc_id
+
+def overwrite_doc_contents(document_id, new_content):
+    """
+    Overwrite the entire contents of a Google Doc with new text.
+
+    Args:
+        document_id (str): The ID of the document to modify.
+        new_content (str): The new text content to insert into the document.
+    """
+    docs_service = build_docs_service()
+
+    # First, get the current document to determine the number of elements
+    doc = docs_service.documents().get(documentId=document_id).execute()
+    end_index = doc.get("body", {}).get("content", [])[-1].get("endIndex", 1)
+
+    # Delete all content
+    requests = [
+        {
+            "deleteContentRange": {
+                "range": {
+                    "startIndex": 1,
+                    "endIndex": end_index - 1
+                }
+            }
+        },
+        {
+            "insertText": {
+                "location": {
+                    "index": 1
+                },
+                "text": new_content
+            }
+        }
+    ]
+
+    docs_service.documents().batchUpdate(
+        documentId=document_id,
+        body={"requests": requests}
+    ).execute()
