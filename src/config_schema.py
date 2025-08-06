@@ -14,6 +14,7 @@ class DocBlockConfig(BaseModel):
     sheet_name: str
     template_path: Path
     block_title_template: str
+    doc_id: str
     enabled: bool = True
 
 
