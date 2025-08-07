@@ -27,8 +27,8 @@ class DailyTaskBot:
             if not task:
                 print(f"No task scheduled for today in block: {block.name}")
                 continue
-
+            preprocessed_task = {k.replace(" ", "_"): v for k, v in task.items()}
             doc_id = block.doc_id
-            new_content = render_template(block.template_path, task)
+            new_content = render_template(block.template_path, preprocessed_task)
 
-            overwrite_doc_contents(doc_id, new_content)
+            overwrite_doc_contents(doc_id, new_content, credentials)
