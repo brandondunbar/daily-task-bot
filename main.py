@@ -1,10 +1,10 @@
 from src.config import load_config
-from src.constants import CONFIG_PATH
+from src.constants import BOT_CONFIG_PATH
 from src.daily_task_bot import DailyTaskBot
 
 
 def main():
-    config = load_config(CONFIG_PATH)
+    config = load_config(BOT_CONFIG_PATH)
     bot = DailyTaskBot(config)
     bot.run()
 
