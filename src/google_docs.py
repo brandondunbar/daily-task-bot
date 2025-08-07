@@ -32,22 +32,25 @@ def overwrite_doc_contents(document_id: str, new_content: str, credentials: Cred
         doc = docs_service.documents().get(documentId=document_id).execute()
         end_index = doc.get("body", {}).get("content", [])[-1].get("endIndex", 1)
 
-        requests = [
-            {
+        requests = []
+
+        # Only add delete if there's something to delete
+        if end_index > 2:
+            requests.append({
                 "deleteContentRange": {
                     "range": {
                         "startIndex": 1,
                         "endIndex": end_index - 1
                     }
                 }
-            },
-            {
-                "insertText": {
-                    "location": {"index": 1},
-                    "text": new_content
-                }
+            })
+
+        requests.append({
+            "insertText": {
+                "location": {"index": 1},
+                "text": new_content
             }
-        ]
+        })
 
         docs_service.documents().batchUpdate(
             documentId=document_id,
