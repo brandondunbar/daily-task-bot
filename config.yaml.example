@@ -6,14 +6,14 @@ google_sheets:
 doc_blocks:
   - name: "Example Block"
     sheet_name: "ExampleSheet"
-    template_path: "templates/example.md"
+    template_path: "templates/example.j2"
     block_title_template: "Example - {{ date }}"
     doc_id: "your-doc-id"
     enabled: true
 
   - name: "Example Block"
     sheet_name: "ExampleSheet"
-    template_path: "templates/example.md"
+    template_path: "templates/example.j2"
     block_title_template: "Example - {{ date }}"
     doc_id: "your-doc-id"
     enabled: true
