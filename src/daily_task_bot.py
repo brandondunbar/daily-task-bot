@@ -43,7 +43,7 @@ class DailyTaskBot:
             if doc_id not in doc_ids.keys():
                 doc_ids[doc_id] = new_content
             else:
-                doc_ids[doc_id] = doc_ids[doc_id] + new_content
+                doc_ids[doc_id] = doc_ids[doc_id] + "\n" + new_content
         
         return doc_ids
 
