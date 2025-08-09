@@ -10,15 +10,23 @@ class DailyTaskBot:
         self.config = config
 
     def run(self):
+        credentials = get_service_account_credentials()
+        doc_ids = self._get_docs_contents(
+            self.config.google_sheets.spreadsheet_id,
+            credentials)
+        
+        for doc_id in doc_ids.keys():
+            overwrite_doc_contents(doc_id, doc_ids[doc_id], credentials)
+    
+    def _get_docs_contents(self, spreadsheet_id, credentials):
+        doc_ids = {}
         for block in self.config.doc_blocks:
             if not block.enabled:
                 continue
 
-            credentials = get_service_account_credentials()
-            
             rows = get_sheet_rows(
                 sheet_name=block.sheet_name,
-                spreadsheet_id=self.config.google_sheets.spreadsheet_id,
+                spreadsheet_id=spreadsheet_id,
                 credentials=credentials
             )
 
@@ -27,8 +35,15 @@ class DailyTaskBot:
             if not task:
                 print(f"No task scheduled for today in block: {block.name}")
                 continue
+
             preprocessed_task = {k.replace(" ", "_"): v for k, v in task.items()}
             doc_id = block.doc_id
             new_content = render_template(block.template_path, preprocessed_task)
 
-            overwrite_doc_contents(doc_id, new_content, credentials)
+            if doc_id not in doc_ids.keys():
+                doc_ids[doc_id] = new_content
+            else:
+                doc_ids[doc_id] = doc_ids[doc_id] + new_content
+        
+        return doc_ids
+
