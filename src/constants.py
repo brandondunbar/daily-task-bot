@@ -1,4 +1,15 @@
+"""Loads and exposes global constants used across the application.
+
+Environment variables are read from a `.env` file (if present) and
+validated for required values. This includes paths to Google service
+account credentials and the bot configuration file.
+
+Raises:
+    RuntimeError: If the required environment variable
+        `GOOGLE_CREDENTIALS_PATH` is not set.
+"""
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from a .env file if it exists

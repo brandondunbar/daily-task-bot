@@ -1,10 +1,18 @@
-import yaml
+"""Loads and validates the application's YAML configuration.
+
+Provides a helper function to read a YAML config file from disk,
+parse it, and return a validated `Config` object based on the schema.
+"""
+
 from pathlib import Path
+
+import yaml
+
 from .config_schema import Config  # or adjust as needed
 
+
 def load_config(path: str) -> Config:
-    """
-    Load and parse a YAML configuration file into a validated Config object.
+    """Load and parse a YAML configuration file into a validated Config object.
 
     Args:
         path (str): Path to the YAML config file.

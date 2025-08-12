@@ -1,18 +1,19 @@
-"""
-Utility functions.
+"""Utility functions for date and time formatting.
+
+Currently provides helpers for returning today's date string in a configurable format.
 """
 
 from datetime import datetime
 
 
-def get_today_str(fmt="%Y-%m-%d") -> str:
-    """
-    Return today's date as a string formatted by the given format string.
+def get_today_str(fmt: str = "%Y-%m-%d") -> str:
+    """Return today's date as a formatted string.
 
     Args:
-        fmt (str): The format to use (default is "%Y-%m-%d").
+        fmt: Format string following `datetime.strftime` syntax.
+            Defaults to "%Y-%m-%d".
 
     Returns:
-        str: Today's date as a string.
+        Today's date as a string formatted according to `fmt`.
     """
     return datetime.today().strftime(fmt)

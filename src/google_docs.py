@@ -1,30 +1,45 @@
-from googleapiclient.discovery import build
+"""Google Docs API helpers for building a service client and updating documents.
+
+This module provides utilities to construct an authenticated Docs service
+and to overwrite a document's contents with new text.
+"""
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from src.template import render_template
 
 
 def build_docs_service(credentials: Credentials):
-    """
-    Return an authenticated Google Docs API service using provided credentials.
+    """Create an authenticated Google Docs API service.
 
     Args:
-        credentials (Credentials): Google service account credentials.
+        credentials: Google service account credentials.
 
     Returns:
-        googleapiclient.discovery.Resource: Google Docs service object.
+        Resource: An authenticated Google Docs service client.
+
+    Raises:
+        HttpError: If the underlying client initialization fails.
     """
     return build("docs", "v1", credentials=credentials)
 
 
-def overwrite_doc_contents(document_id: str, new_content: str, credentials: Credentials):
-    """
-    Overwrite the entire contents of a Google Doc with new text.
+def overwrite_doc_contents(
+    document_id: str,
+    new_content: str,
+    credentials: Credentials,
+) -> None:
+    """Overwrite the entire contents of a Google Doc with new text.
+
+    Fetches the document to determine its current end index, deletes existing
+    content (if any), and inserts the provided `new_content` at the start.
 
     Args:
-        document_id (str): The ID of the document to modify.
-        new_content (str): The new text content to insert into the document.
-        credentials (Credentials): Authenticated service account credentials.
+        document_id: The ID of the Google Doc to modify.
+        new_content: The new text content to insert into the document.
+        credentials: Authenticated service account credentials.
+
+    Raises:
+        HttpError: If the Google Docs API request fails.
     """
     docs_service = build_docs_service(credentials)
 
