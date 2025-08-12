@@ -3,6 +3,7 @@
 This module provides utilities to construct an authenticated Docs service
 and to overwrite a document's contents with new text.
 """
+
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -45,33 +46,39 @@ def overwrite_doc_contents(
 
     try:
         doc = docs_service.documents().get(documentId=document_id).execute()
-        end_index = doc.get("body", {}).get("content", [])[-1].get("endIndex", 1)
+        content = doc.get("body", {}).get("content", [])
+        # Be robust to empty documents (avoid IndexError on content[-1]).
+        end_index: int = content[-1].get("endIndex", 1) if content else 1
 
         requests = []
 
-        # Only add delete if there's something to delete
-        if end_index > 2:
-            requests.append({
-                "deleteContentRange": {
-                    "range": {
-                        "startIndex": 1,
-                        "endIndex": end_index - 1
+        if end_index > 1:
+            requests.append(
+                {
+                    "deleteContentRange": {
+                        "range": {
+                            "startIndex": 1,
+                            "endIndex": end_index - 1,
+                        }
                     }
                 }
-            })
+            )
 
-        requests.append({
-            "insertText": {
-                "location": {"index": 1},
-                "text": new_content
+        requests.append(
+            {
+                "insertText": {
+                    "location": {"index": 1},
+                    "text": new_content,
+                }
             }
-        })
+        )
 
         docs_service.documents().batchUpdate(
             documentId=document_id,
-            body={"requests": requests}
+            body={"requests": requests},
         ).execute()
 
     except HttpError as error:
         print(f"An error occurred: {error}")
         raise
+
