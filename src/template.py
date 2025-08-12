@@ -27,7 +27,7 @@ def render_template(template_path: Path, context: Dict[str, Any]) -> str:
         FileNotFoundError: If the template file does not exist.
         jinja2.TemplateSyntaxError: If the template contains invalid syntax.
     """
-    with open(template_path, 'r') as file:
+    with open(template_path, "r", encoding="utf-8") as file:
         template_str = file.read()
 
     template = Template(template_str)
