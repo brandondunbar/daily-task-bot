@@ -32,6 +32,8 @@ def find_today_task(
     today = get_today_str()
 
     for row in rows:
+        if date_column not in row:
+            raise KeyError(f"Missing required date column: {date_column!r}")
         if row[date_column] == today:
             return row
 
