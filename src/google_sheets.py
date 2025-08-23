@@ -4,11 +4,14 @@ This module exposes a thin wrapper that authorizes a Sheets client with a
 service account and returns all records from a specific worksheet tab.
 """
 
-
 from typing import Any, Dict, List
 
 import gspread
 from google.oauth2.service_account import Credentials
+
+from src.observability.logging_setup import get_logger
+
+log = get_logger(__name__)
 
 
 def get_sheet_rows(
@@ -35,7 +38,23 @@ def get_sheet_rows(
         WorksheetNotFound: If the named worksheet does not exist.
         APIError: For other Google Sheets API-related errors (quota, auth, etc.).
     """
-    client = gspread.authorize(credentials)
-    sheet = client.open_by_key(spreadsheet_id)
-    worksheet = sheet.worksheet(sheet_name)
-    return worksheet.get_all_records()
+    try:
+        client = gspread.authorize(credentials)
+        sheet = client.open_by_key(spreadsheet_id)
+        worksheet = sheet.worksheet(sheet_name)
+        rows = worksheet.get_all_records()
+        log.info(
+            "sheet_rows_fetched",
+            spreadsheet_id=spreadsheet_id,
+            sheet_name=sheet_name,
+            rows=len(rows),
+        )
+        return rows
+    except Exception as e:
+        log.exception(
+            "sheet_rows_fetch_failed",
+            spreadsheet_id=spreadsheet_id,
+            sheet_name=sheet_name,
+            error=str(e),
+        )
+        raise
