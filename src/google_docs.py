@@ -8,6 +8,10 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from src.observability.logging_setup import get_logger
+
+log = get_logger(__name__)
+
 
 def build_docs_service(credentials: Credentials):
     """Create an authenticated Google Docs API service.
@@ -21,7 +25,13 @@ def build_docs_service(credentials: Credentials):
     Raises:
         HttpError: If the underlying client initialization fails.
     """
-    return build("docs", "v1", credentials=credentials)
+    try:
+        service = build("docs", "v1", credentials=credentials)
+        log.info("docs_service_built")
+        return service
+    except HttpError as error:
+        log.exception("docs_service_build_failed", error=str(error))
+        raise
 
 
 def overwrite_doc_contents(
@@ -47,11 +57,9 @@ def overwrite_doc_contents(
     try:
         doc = docs_service.documents().get(documentId=document_id).execute()
         content = doc.get("body", {}).get("content", [])
-        # Be robust to empty documents (avoid IndexError on content[-1]).
         end_index: int = content[-1].get("endIndex", 1) if content else 1
 
         requests = []
-
         if end_index > 1:
             requests.append(
                 {
@@ -78,7 +86,8 @@ def overwrite_doc_contents(
             body={"requests": requests},
         ).execute()
 
-    except HttpError as error:
-        print(f"An error occurred: {error}")
-        raise
+        log.info("doc_overwritten", document_id=document_id, chars=len(new_content))
 
+    except HttpError as error:
+        log.exception("doc_update_failed", document_id=document_id, error=str(error))
+        raise
