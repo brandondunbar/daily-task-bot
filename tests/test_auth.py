@@ -1,10 +1,11 @@
 import pytest
+from google.oauth2.service_account import Credentials
 from src.auth import get_service_account_credentials
 from src.constants import GOOGLE_CREDENTIALS_PATH
-from google.oauth2.service_account import Credentials
 
 
 def test_get_service_account_credentials_default_scopes(monkeypatch):
+    """Loads credentials with default Sheets and Docs scopes."""
     class DummyCredentials:
         def __init__(self, filename, scopes):
             self.filename = filename
@@ -23,6 +24,7 @@ def test_get_service_account_credentials_default_scopes(monkeypatch):
 
 
 def test_get_service_account_credentials_custom_scopes(monkeypatch):
+    """Loads credentials using explicitly provided scopes."""
     class DummyCredentials:
         def __init__(self, filename, scopes):
             self.filename = filename
@@ -38,3 +40,16 @@ def test_get_service_account_credentials_custom_scopes(monkeypatch):
 
     assert creds.filename == GOOGLE_CREDENTIALS_PATH
     assert creds.scopes == custom_scopes
+
+
+def test_get_service_account_credentials_raises_and_logs(monkeypatch):
+    """Raises and logs error when loading credentials fails."""
+    monkeypatch.setattr(
+        "src.auth.Credentials.from_service_account_file",
+        lambda path, scopes: (_ for _ in ()).throw(Exception("Boom"))
+    )
+
+    with pytest.raises(Exception, match="Boom"):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("src.auth.log.exception", lambda *args, **kwargs: None)
+            get_service_account_credentials()
