@@ -1,5 +1,4 @@
 import pytest
-from google.oauth2.service_account import Credentials
 from src.auth import get_service_account_credentials
 from src.constants import GOOGLE_CREDENTIALS_PATH
 
