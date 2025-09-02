@@ -39,7 +39,6 @@ def _install_signal_handlers(bot: DailyTaskBot, log) -> None:
             log.info("signal_received", signum=signum)
         _shutdown_event.set()
 
-        # Best-effort: ask the bot to stop if it exposes a conventional API
         for name in ("stop", "shutdown", "close", "cancel"):
             if hasattr(bot, name) and callable(getattr(bot, name)):
                 if log:
@@ -70,15 +69,12 @@ def main():
     _install_signal_handlers(bot, log)
 
     try:
-        # If your bot supports a cooperative loop, it can poll `is_shutting_down()`.
-        # Otherwise, the signal handler above will try to call bot.stop()/shutdown().
         bot.run()
         log.info("application_exited", status="success")
     except Exception as e:
         log.exception("application_exited", status="failure", error=str(e))
         raise
     finally:
-        # Final best-effort cleanup hook if present
         for name in ("cleanup", "close"):
             if hasattr(bot, name) and callable(getattr(bot, name)):
                 _maybe_call(getattr(bot, name), log)
